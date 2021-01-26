@@ -1,0 +1,7 @@
+piano_transcription_inference_data
+*.mid
+*.mp3
+
+__pycache__/
+*.py[cod]
+*$py.class

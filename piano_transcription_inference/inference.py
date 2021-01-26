@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from .utilities import (create_folder, get_filename, RegressionPostProcessor, 
+from .utilities import (download_file, create_folder, get_filename, RegressionPostProcessor, 
     write_events_to_midi)
 from .models import Regress_onset_offset_frame_velocity_CRNN, Note_pedal
 from .pytorch_utils import move_data_to_device, forward
@@ -15,7 +15,9 @@ from . import config
 
 class PianoTranscription(object):
     def __init__(self, model_type='Note_pedal', checkpoint_path=None, 
-        segment_samples=16000*10, device=torch.device('cuda')):
+        segment_samples=16000*10,
+        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')):     
+        #device=torch.device('cuda')):
         """Class for transcribing piano solo recording.
 
         Args:
@@ -25,14 +27,15 @@ class PianoTranscription(object):
           device: 'cuda' | 'cpu'
         """
         if not checkpoint_path: 
-            checkpoint_path='{}/piano_transcription_inference_data/note_F1=0.9677_pedal_F1=0.9186.pth'.format(str(Path.home()))
+            checkpoint_path='{}/piano_transcription_inference_data/note_F1=0.9677_pedal_F1=0.9186.pth'.format(str(os.path.abspath(os.getcwd())))
         print('Checkpoint path: {}'.format(checkpoint_path))
 
         if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) < 1.6e8:
             create_folder(os.path.dirname(checkpoint_path))
             print('Total size: ~165 MB')
             zenodo_path = 'https://zenodo.org/record/4034264/files/CRNN_note_F1%3D0.9677_pedal_F1%3D0.9186.pth?download=1'
-            os.system('wget -O "{}" "{}"'.format(checkpoint_path, zenodo_path))
+            #os.system('wget -O "{}" "{}"'.format(checkpoint_path, zenodo_path))
+            download_file(zenodo_path, checkpoint_path)
 
         print('Using {} for inference.'.format(device))
 
@@ -50,7 +53,8 @@ class PianoTranscription(object):
             classes_num=self.classes_num)
 
         # Load model
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        #checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path)
         self.model.load_state_dict(checkpoint['model'], strict=False)
 
         # Parallel

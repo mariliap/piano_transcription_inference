@@ -8,6 +8,28 @@ from .piano_vad import (note_detection_with_onset_offset_regress,
     pedal_detection_with_onset_offset_regress)
 from . import config
 
+import requests
+import time
+import re
+from clint.textui import progress
+
+def download_file(url, outPath):
+    header = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'}
+    response = requests.get(f'{url}', headers = header, stream=True)
+    response_headers = response.headers['content-disposition']
+    file_name = re.findall('filename=(.+)', response_headers)[0]
+    file_name = file_name.replace('"','')
+    
+    print('Arquivo: {}'.format(outPath))
+    with open(f'{outPath}', 'wb') as f:
+        total_length = int(response.headers.get('content-length'))
+        for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1): 
+            if chunk:
+                f.write(chunk)
+                f.flush()
+                #print('Arquivo: {}'.format(outPath))
+    #with open(f'./{file_name}', 'wb') as f:
+        #f.write(response.content)
 
 def create_folder(fd):
     if not os.path.exists(fd):
